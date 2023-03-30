@@ -65,6 +65,7 @@ public class LobbyManager : Singleton<LobbyManager>
             if (newLobby.LastUpdated > _lobby.LastUpdated)
             {
                 _lobby = newLobby;
+                LobbyEvents.OnLobbyUpdate?.Invoke(_lobby);
             }
 
 
@@ -111,5 +112,17 @@ public class LobbyManager : Singleton<LobbyManager>
 
         _refreshLobbyCoroutine = StartCoroutine(RefreshLobbyCoroutine(_lobby.Id, 1f));
         return true;
+    }
+
+    public List<Dictionary<string, PlayerDataObject>> GetPlayerData()
+    {
+        List<Dictionary<string, PlayerDataObject>> data = new List<Dictionary<string, PlayerDataObject>>();
+
+        foreach (Player player in _lobby.Players)
+        {
+            data.Add(player.Data);
+        }
+
+        return data;
     }
 }
