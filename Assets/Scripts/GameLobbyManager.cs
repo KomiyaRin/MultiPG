@@ -67,4 +67,10 @@ public class GameLobbyManager : Singleton<GameLobbyManager>
     {
         return _lobbyPlayerDatas;
     }
+
+    public async Task<bool> SetPlayerReady()
+    {
+        _localLobbyPlayerData.IsReady = true;
+        return await LobbyManager.Instance.UpdatePlayerData(_localLobbyPlayerData.Id, _localLobbyPlayerData.Serialize());
+    }
 }
