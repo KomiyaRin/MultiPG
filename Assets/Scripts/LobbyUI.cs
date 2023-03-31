@@ -8,15 +8,23 @@ public class LobbyUI : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI _lobbyCodeText;
     [SerializeField] private Button _readyButton;
+    [SerializeField] private Button _startButton;
 
     private void OnEnable()
     {
         _readyButton.onClick.AddListener(OnReadyPressed);
+        if (GameLobbyManager.Instance.IsHost)
+        {
+            _startButton.onClick.AddListener(OnStartButtonClicked);
+            LobbyEvent.OnLobbyReady += OnLobbyReady;
+        }
     }
 
     private void OnDisable()
     {
         _readyButton.onClick.RemoveAllListeners();
+        _startButton.onClick.RemoveAllListeners();
+        LobbyEvent.OnLobbyReady -= OnLobbyReady;
     }
 
     private void Start()
@@ -33,8 +41,13 @@ public class LobbyUI : MonoBehaviour
         }
     }
 
-    private void Update()
+    private void OnLobbyReady()
     {
-        
+        _startButton.gameObject.SetActive(true);
+    }
+
+    private void OnStartButtonClicked()
+    {
+        GameLobbyManager.Instance.StartGame();
     }
 }

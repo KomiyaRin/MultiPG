@@ -4,12 +4,15 @@ using System.Threading.Tasks;
 using UnityEngine;
 using Unity.Services.Authentication;
 using Unity.Services.Lobbies.Models;
+using UnityEngine.SceneManagement;
 
 public class GameLobbyManager : Singleton<GameLobbyManager>
 {
     private List<LobbyPlayerData> _lobbyPlayerDatas = new List<LobbyPlayerData>();
 
     private LobbyPlayerData _localLobbyPlayerData;
+
+    public bool IsHost => _localLobbyPlayerData.Id == LobbyManager.Instance.OnHostId();
 
     private void OnEnable()
     {
@@ -28,17 +31,17 @@ public class GameLobbyManager : Singleton<GameLobbyManager>
 
     public async Task<bool> CreateLobby()
     {
-        LobbyPlayerData playerData = new LobbyPlayerData();
-        playerData.Initialize(AuthenticationService.Instance.PlayerId, "HostPlayer");
-        bool succeeded = await LobbyManager.Instance.CreateLobby(4, true, playerData.Serialize());
+        _localLobbyPlayerData = new LobbyPlayerData();
+        _localLobbyPlayerData.Initialize(AuthenticationService.Instance.PlayerId, "HostPlayer");
+        bool succeeded = await LobbyManager.Instance.CreateLobby(4, true, _localLobbyPlayerData.Serialize());
         return succeeded;
     }
 
     public async Task<bool> JoinLobby(string code)
     {
-        LobbyPlayerData playerData = new LobbyPlayerData();
-        playerData.Initialize(AuthenticationService.Instance.PlayerId, "JoinPlayer");
-        bool succeeded = await LobbyManager.Instance.JoinLobby(code, playerData.Serialize());
+        _localLobbyPlayerData = new LobbyPlayerData();
+        _localLobbyPlayerData.Initialize(AuthenticationService.Instance.PlayerId, "JoinPlayer");
+        bool succeeded = await LobbyManager.Instance.JoinLobby(code, _localLobbyPlayerData.Serialize());
         return succeeded;
     }
 
@@ -47,10 +50,16 @@ public class GameLobbyManager : Singleton<GameLobbyManager>
         List<Dictionary<string, PlayerDataObject>> playerData = LobbyManager.Instance.GetPlayerData();
         _lobbyPlayerDatas.Clear();
 
+        int numberOfPlayerReady = 0;
         foreach (Dictionary<string, PlayerDataObject> data in playerData)
         {
             LobbyPlayerData lobbyPlayerData = new LobbyPlayerData();
             lobbyPlayerData.Initialize(data);
+
+            if (lobbyPlayerData.IsReady)
+            {
+                numberOfPlayerReady++;
+            }
 
             if(lobbyPlayerData.Id == AuthenticationService.Instance.PlayerId)
             {
@@ -61,6 +70,11 @@ public class GameLobbyManager : Singleton<GameLobbyManager>
         }
 
         LobbyEvent.OnLobbyUpdated?.Invoke();
+
+        if (numberOfPlayerReady == lobby.Players.Count)
+        {
+            LobbyEvent.OnLobbyReady?.Invoke();
+        }
     }
 
     public List<LobbyPlayerData> GetPlayers()
@@ -72,5 +86,10 @@ public class GameLobbyManager : Singleton<GameLobbyManager>
     {
         _localLobbyPlayerData.IsReady = true;
         return await LobbyManager.Instance.UpdatePlayerData(_localLobbyPlayerData.Id, _localLobbyPlayerData.Serialize());
+    }
+
+    public void StartGame()
+    {
+        SceneManager.LoadScene("TestGame");
     }
 }

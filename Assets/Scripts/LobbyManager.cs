@@ -146,4 +146,9 @@ public class LobbyManager : Singleton<LobbyManager>
 
         return true;
     }
+
+    public string OnHostId()
+    {
+        return _lobby.HostId;
+    }
 }
